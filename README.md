@@ -16,6 +16,15 @@ pip install -e ".[dev]"
 pytest
 ```
 
+## Examples
+
+Example scripts are in `examples/`:
+
+- Matrix input: [examples/usage_matrix.py](examples/usage_matrix.py)
+- Factor input via auto wrapper: [examples/usage_factor_auto.py](examples/usage_factor_auto.py)
+
+Run with `python examples/usage_matrix.py` or `python examples/usage_factor_auto.py`.
+
 ### Code Quality
 
 Check code style and formatting:
