@@ -31,19 +31,18 @@ pytest
 
 ## Example: No-prior designs in 2D
 
-The figure below, `no_prior_designs.png`, visualizes the designs produced by
-`compute_spectral_design_no_prior(d=2, k)` for several values of `k`.
+The figure below, `no_prior_designs.png`, visualizes the designs for several values of `k`.
 
 ![No-prior spectral designs in 2D](examples/no_prior_designs.png)
 
 For each subplot:
 
-- The dashed circle is the unit circle in \(\mathbb{R}^2\).
+- The dashed circle is the unit circle in $\mathbb{R}^2$.
 - The plots in the first row are obtained with the closed form solutions.
 - The plots in the second row are obtained with the polynomal time algorithm.
 - The muliplicity of the dots (columns of the design matrix) are indicated by the numbers
   next to them.
-- \(F^*\) stands for \(\mathrm{Tr}((\boldsymbol{X} \boldsymbol{X}^\top)^{-1})\) is minimized for the zero prior \(\boldsymbol{A} = \boldsymbol{A}\).
+- $F^*$ stands for $\mathrm{Tr}((\boldsymbol{X} \boldsymbol{X}^\top)^{-1})$ is minimized for the zero prior $\boldsymbol{A} = \boldsymbol{0}$.
 
 You can regenerate the figure by running:
 
