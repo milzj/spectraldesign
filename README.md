@@ -6,11 +6,22 @@ A Python package for spectral design.
 
 ### Install in development mode
 
+Create and activate a virtual environment:
+
+```
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\\Scripts\\activate
+```
+
+Then install the package with development dependencies:
+
 ```bash
 pip install -e ".[dev]"
 ```
 
 ### Running Tests
+
+To run the test suite, use:
 
 ```bash
 pytest
@@ -18,12 +29,28 @@ pytest
 
 ## Examples
 
-Example scripts are in `examples/`:
+## Example: No-prior designs in 2D
 
-- Matrix input: [examples/usage_matrix.py](examples/usage_matrix.py)
-- Factor input via auto wrapper: [examples/usage_factor_auto.py](examples/usage_factor_auto.py)
+The figure below, `no_prior_designs.png`, visualizes the designs produced by
+`compute_spectral_design_no_prior(d=2, k)` for several values of `k`.
 
-Run with `python examples/usage_matrix.py` or `python examples/usage_factor_auto.py`.
+![No-prior spectral designs in 2D](examples/no_prior_designs.png)
+
+For each subplot:
+
+- The dashed circle is the unit circle in \(\mathbb{R}^2\).
+- The plots in the first row are obtained with the closed form solutions.
+- The plots in the second row are obtained with the polynomal time algorithm.
+- The muliplicity of the dots (columns of the design matrix) are indicated by the numbers
+  next to them.
+- \(F^*\) stands for \(\mathrm{Tr}((\boldsymbol{X} \boldsymbol{X}^\top)^{-1})\) is minimized for the zero prior \(\boldsymbol{A} = \boldsymbol{A}\).
+
+You can regenerate the figure by running:
+
+```bash
+cd examples
+python ./no_prior_design.py
+```
 
 ### Code Quality
 
