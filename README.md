@@ -42,7 +42,8 @@ For each subplot:
 - The plots in the second row are obtained with the polynomal time algorithm.
 - The muliplicity of the dots (columns of the design matrix) are indicated by the numbers
   next to them.
-- $F^*$ stands for $\mathrm{Tr}((\boldsymbol{X} \boldsymbol{X}^\top)^{-1})$ is minimized for the zero prior $\boldsymbol{A} = \boldsymbol{0}$.
+- $F^*$ (optimal value). More precisely, it evaluates $\mathrm{Tr}((\boldsymbol{X} \boldsymbol{X}^\top)^{-1})$
+for the optimal design matrix $\boldsymbol{X} \in \mathbb{R}^{2 \times k}$.
 
 You can regenerate the figure by running:
 
@@ -50,6 +51,47 @@ You can regenerate the figure by running:
 cd examples
 python ./no_prior_design.py
 ```
+
+## Example: One-prior design experiment
+
+The figures `one_prior_design_examples.png` and `one_prior_design_scaled.png`
+illustrate a single application: optimal design in the presence of a fixed
+(nonzero) prior matrix $\boldsymbol{A} = \boldsymbol{X}_0 \boldsymbol{X}_0^top$.
+
+In this experiment:
+
+- We fix a prior covariance (or information) matrix $\boldsymbol{X}_0 \in \mathbb{R}^{2}$.
+- For several budgets $k$, we compute a design matrix
+  $\boldsymbol{X} \in \mathbb{R}^{2 \times k}$.
+- Each subplot shows the columns of $\boldsymbol{X}$ (points in the unit disk) 
+  and those of $\boldsymbol{X}_0$ 
+
+We consider figure
+
+![One-prior design examples](examples/one_prior_design_examples.png)
+
+where the prior vector $\boldsymbol{X}_0$ has unit norm, and
+
+![One-prior design examples (scaled)](examples/one_prior_design_scaled.png)
+
+where the prior vector $\boldsymbol{X}_0$ has norm $2$. Both figures show, for each choice $k$:
+
+- The vector $\boldsymbol{X}_0$.
+- The optimized design points (columns of $\boldsymbol{X}$).
+
+### Reproducing the one-prior experiment
+
+You can regenerate the plots by running from the project root:
+
+```bash
+cd examples
+python ./one_prior_design.py
+```
+
+which will produce:
+
+- `examples/one_prior_design_examples.png`
+- `examples/one_prior_design_scaled.png`
 
 ### Code Quality
 

@@ -78,7 +78,7 @@ def run_example(
 
     ax.set_xlabel(r"$x_1$")
     ax.set_ylabel(r"$x_2$")
-    title = "Design columns"
+    title = f"Design columns (k={k})"
     if example_idx is not None:
         title += f" (example {example_idx})"
     ax.set_title(title)
@@ -98,7 +98,7 @@ def main() -> None:
         np.array([[0.5], [np.sqrt(3) / 2]], dtype=float),
     ]
 
-    k = 10
+    k = 3
 
     n_examples = len(X0_examples)
     n_cols = 3
@@ -116,10 +116,10 @@ def main() -> None:
         axes[j].axis("off")
 
     plt.tight_layout()
-    plt.savefig("spectral_design_auto_examples.png")
+    plt.savefig("one_prior_design_examples.png")
 
     # Second set of examples: scale X0 by 2, with one example using flipped columns.
-    X0_examples_scaled = [.0 * X0 for X0 in X0_examples]
+    X0_examples_scaled = [2 * X0 for X0 in X0_examples]
 
     n_examples_scaled = len(X0_examples_scaled)
     n_cols_scaled = 3
@@ -145,7 +145,7 @@ def main() -> None:
         axes_scaled[j].axis("off")
 
     plt.tight_layout()
-    plt.savefig("spectral_design_auto_examples_scaled.png")
+    plt.savefig("one_prior_design_scaled.png")
 
 
 
