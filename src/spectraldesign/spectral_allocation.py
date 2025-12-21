@@ -18,7 +18,9 @@ from __future__ import annotations
 import math
 from bisect import bisect_right
 from dataclasses import dataclass
-from typing import Iterable, List
+from typing import Iterable
+
+import numpy as np
 
 
 @dataclass(frozen=True)
@@ -26,54 +28,47 @@ class AllocationSolution:
     """Container for the allocation solution."""
 
     c_star: float
-    beta_star: List[float]
-    beta_prime: List[float]
-    caps: List[float]
+    beta_star: np.ndarray
+    beta_prime: np.ndarray
+    caps: np.ndarray
+    optimal_value: float
 
-
-
-def _build_caps(t: List[float], k: int) -> List[float]:
+def _build_caps(t: np.ndarray, hat_d: int) -> np.ndarray:
     """Construct the cap vector ``u`` as defined in the relaxation."""
 
     d = len(t)
-    hat_d = min(d, k)
-    return [t[j + hat_d] if j < d - hat_d else math.inf for j in range(d)]
+    return np.array([t[j + hat_d] if j < d - hat_d else math.inf for j in range(d)])
 
 
-def _beta_for_c(t: List[float], caps: List[float], c: float, k: int) -> List[float]:
+def _beta_for_c(t: np.ndarray, caps: np.ndarray, c: float) -> np.ndarray:
     """Evaluate ``beta(c)``: projection of ``c 1`` onto ``[t, u] - t``."""
 
-    d = len(t)
-    hat_d = min(d, k)
-    return [
-        min(max(0.0, c - t[j]), caps[j] - t[j]) if j < d - hat_d else max(0.0, c - t[j])
-        for j in range(d)
-    ]
+    return np.clip(c, t, caps) - t
 
 
-def _sum_beta(t: List[float], caps: List[float], c: float, k: int) -> float:
+def _sum_beta(t: np.ndarray, caps: np.ndarray, c: float) -> float:
     """Sum the allocation increments for a given level ``c``."""
 
-    return float(sum(_beta_for_c(t, caps, c, k)))
+    return np.sum(_beta_for_c(t, caps, c))
 
-
-def _find_c_star(t: List[float], caps: List[float], k: int, tol: float = 1e-9) -> float:
+def _find_c_star(t: np.ndarray, caps: np.ndarray, k: int, hat_d: int, tol: float = 1e-9) -> float:
     """Locate the unique level ``c`` such that ``sum(beta(c)) = k``."""
 
     if k <= 0:
-        return t[0]
+        return float(t[0])
 
-    infinite_capacity = any(math.isinf(u) for u in caps)
-    max_possible = sum(max(0.0, u - tj) for tj, u in zip(t, caps) if not math.isinf(u))
+    infinite_capacity = np.any(np.isinf(caps))
+    finite_mask = np.isfinite(caps)
+    max_possible = float(np.sum(np.maximum(0.0, caps[finite_mask] - t[finite_mask])))
     if not infinite_capacity and max_possible + 1e-12 < k:
         raise ValueError("Infeasible budget: caps cannot accommodate requested mass k")
 
-    low = t[0]
-    high = max(t[-1], low + k)
+    low = float(t[0])
+    high = max(float(t[-1]), low + k)
 
     # Grow the upper bound until the budget is reachable.
     for _ in range(64):
-        if _sum_beta(t, caps, high, k) >= k:
+        if _sum_beta(t, caps, high) >= k:
             break
         high = high * 2.0 if high > 0 else 1.0
     else:
@@ -81,7 +76,7 @@ def _find_c_star(t: List[float], caps: List[float], k: int, tol: float = 1e-9) -
 
     for _ in range(100):
         mid = 0.5 * (low + high)
-        total = _sum_beta(t, caps, mid, k)
+        total = _sum_beta(t, caps, mid)
         if abs(total - k) <= tol:
             return mid
         if total < k:
@@ -91,41 +86,19 @@ def _find_c_star(t: List[float], caps: List[float], k: int, tol: float = 1e-9) -
     return high
 
 
-def _beta_prime(t: List[float], caps: List[float], c_star: float, k: int) -> List[float]:
+def _beta_prime(t: np.ndarray, caps: np.ndarray, c_star: float, hat_d: int) -> np.ndarray:
     """Construct the sparse ``beta'`` that is permutation-equivalent to ``beta_star``."""
 
     d = len(t)
-    hat_d = min(d, k)
-
     overline_d = bisect_right(t, c_star)
     s_greater = sum(1 for j in range(overline_d) if caps[j] > c_star)
     s_greater = min(s_greater, hat_d)
+    beta_prime = np.zeros(d, dtype=float)
+    if s_greater > 0:
+        beta_prime[:s_greater] = np.maximum(0.0, c_star - t[:s_greater])
+    return beta_prime
 
-    return [max(0.0, c_star - t[j]) if j < s_greater else 0.0 for j in range(d)]
-
-
-def compute_optimal_betas(t: Iterable[float], k: int, tol: float = 1e-9) -> AllocationSolution:
-    """Compute ``c^*``, ``beta^*``, and ``beta'`` for the relaxation (Rel-Gen)."""
-
-    t_list = [float(x) for x in t]
-    if not t_list:
-        raise ValueError("Input eigenvalue list 't' must be non-empty")
-
-    if any(t_list[i] > t_list[i + 1] for i in range(len(t_list) - 1)):
-        raise ValueError("Eigenvalues must be provided in nondecreasing order")
-
-    if k < 0:
-        raise ValueError("Budget k must be non-negative")
-
-    caps = _build_caps(t_list, k)
-    c_star = _find_c_star(t_list, caps, k, tol)
-    beta_star = _beta_for_c(t_list, caps, c_star, k)
-    beta_prime = _beta_prime(t_list, caps, c_star, k)
-
-    return AllocationSolution(c_star=c_star, beta_star=beta_star, beta_prime=beta_prime, caps=caps)
-
-
-def compute_relaxation_objective_inverse(t: Iterable[float], alloc: AllocationSolution) -> float:
+def _compute_relaxation_objective_inverse(t: np.ndarray, beta: np.ndarray) -> float:
     """Compute the optimal value of Rel-Gen for f(x) = sum 1/x_i.
 
     Parameters
@@ -140,16 +113,36 @@ def compute_relaxation_objective_inverse(t: Iterable[float], alloc: AllocationSo
     float
         The optimal objective: sum_i 1/(t_i + beta_star_i).
     """
-    t_list = [float(x) for x in t]
-    beta_s = alloc.beta_star
-    if len(t_list) != len(beta_s):
-        raise ValueError("Dimension mismatch between t and beta_star")
+    return np.sum(1.0 / (t + beta))
 
-    return float(sum(1.0 / (tj + bj) for tj, bj in zip(t_list, beta_s) if tj + bj > 1e-16))
+def compute_optimal_betas(t: np.array, k: int, tol: float = 1e-12) -> AllocationSolution:
+    """Compute ``c^*``, ``beta^*``, and ``beta'`` for the relaxation (Rel-Gen)."""
 
+    if t.size == 0:
+        raise ValueError("Input eigenvalue vector 't' must be non-empty")
+
+    if any(t[i] > t[i + 1] for i in range(len(t) - 1)):
+        raise ValueError("Eigenvalues must be provided in nondecreasing order")
+
+    if k < 0:
+        raise ValueError("Budget k must be non-negative")
+
+    d = len(t)
+    hat_d = min(d, k)
+
+    caps = _build_caps(t, hat_d)
+    c_star = _find_c_star(t, caps, k, hat_d, tol)
+    assert np.abs(_sum_beta(t, caps, c_star) - k) <= tol
+    beta_star = _beta_for_c(t, caps, c_star)
+    beta_prime = _beta_prime(t, caps, c_star, hat_d)
+    optimal_value = _compute_relaxation_objective_inverse(t, beta_star)
+
+    return AllocationSolution(c_star=c_star, beta_star=beta_star, 
+                              beta_prime=beta_prime, caps=caps, 
+                              optimal_value=optimal_value)
 
 def compute_relaxation_optimal_value(
-    t: Iterable[float],
+    t: np.ndarray,
     k: int,
     f: callable,
     tol: float = 1e-9,
@@ -194,9 +187,7 @@ def compute_relaxation_optimal_value(
     # Solve the relaxation to get optimal β*
     alloc = compute_optimal_betas(t, k, tol)
 
-    # Compute t + β*
-    t_list = [float(x) for x in t]
-    t_plus_beta = [tj + bj for tj, bj in zip(t_list, alloc.beta_star)]
+    t_plus_beta = t + alloc.beta_star
 
     # Evaluate objective at optimal point
     obj_value = f(t_plus_beta)

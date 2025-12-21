@@ -7,26 +7,27 @@ keeping columns in the unit Euclidean ball.
 from __future__ import annotations
 
 import math
-from typing import List, NamedTuple
+from typing import NamedTuple
 
 import numpy as np
 
 from .spectral_allocation import compute_optimal_betas
 
 
+
 class SpectralDesignResult(NamedTuple):
     """Full spectral design output."""
 
     X: np.ndarray  # design matrix with columns in the unit ball
-    beta_star: List[float]
-    beta_prime: List[float]
+    beta_star: np.ndarray
+    beta_prime: np.ndarray
     c_star: float
-    caps: List[float]
-    eigenvalues: List[float]
+    caps: np.ndarray
+    eigenvalues: np.ndarray
     eigenvectors: np.ndarray
 
 
-def _orthogonal_equalize_diagonal(overline_beta: List[float], tol: float = 1e-10, max_iter: int = 10_000) -> np.ndarray:
+def _orthogonal_equalize_diagonal(overline_beta: np.ndarray, tol: float = 1e-10, max_iter: int = 10_000) -> np.ndarray:
     """Find an orthogonal matrix R so that diag(R^T diag(overline_beta) R) ≈ 1.
 
     Uses iterative Givens rotations moving mass from coordinates with diagonal
@@ -104,7 +105,7 @@ def compute_spectral_design(A: np.ndarray, k: int, tol: float = 1e-9) -> Spectra
         if beta_p[j] > 0.0:
             B[j, j] = math.sqrt(beta_p[j])
 
-    overline_beta = list(beta_p[:hat_d]) + [0.0] * (k - hat_d)
+    overline_beta = np.concatenate([beta_p[:hat_d], np.zeros(k - hat_d)])
     R = _orthogonal_equalize_diagonal(overline_beta, tol=tol)
 
     X0 = B @ R
@@ -120,7 +121,7 @@ def compute_spectral_design(A: np.ndarray, k: int, tol: float = 1e-9) -> Spectra
         beta_prime=alloc.beta_prime,
         c_star=alloc.c_star,
         caps=alloc.caps,
-        eigenvalues=list(eigvals),
+        eigenvalues=eigvals,
         eigenvectors=eigvecs,
     )
 
@@ -156,7 +157,7 @@ def compute_spectral_design_from_factor(X0: np.ndarray, k: int, tol: float = 1e-
         if beta_p[j] > 0.0:
             B[j, j] = math.sqrt(beta_p[j])
 
-    overline_beta = list(beta_p[:hat_d]) + [0.0] * (k - hat_d)
+    overline_beta = np.concatenate([beta_p[:hat_d], np.zeros(k - hat_d)])
     R = _orthogonal_equalize_diagonal(overline_beta, tol=tol)
 
     X0_new = B @ R
@@ -172,7 +173,7 @@ def compute_spectral_design_from_factor(X0: np.ndarray, k: int, tol: float = 1e-
         beta_prime=alloc.beta_prime,
         c_star=alloc.c_star,
         caps=alloc.caps,
-        eigenvalues=list(eigvals),
+        eigenvalues=eigvals,
         eigenvectors=eigvecs,
     )
 

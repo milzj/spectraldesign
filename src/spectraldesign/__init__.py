@@ -3,8 +3,8 @@
 from .spectral_allocation import (
     AllocationSolution,
     compute_optimal_betas,
-    compute_relaxation_objective_inverse,
     compute_relaxation_optimal_value,
+    compute_relaxation_objective_inverse,
 )
 from .spectral_design import (
 	SpectralDesignResult,

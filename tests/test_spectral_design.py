@@ -18,7 +18,7 @@ def test_design_reconstructs_target_spectrum():
     A_plus = A + X @ X.T
 
     # Eigenvalues should match t + beta' up to permutation and tolerance.
-    expected = np.sort(np.array(res.eigenvalues) + np.array(res.beta_prime))
+    expected = np.sort(np.array(res.eigenvalues) + res.beta_prime)
     observed = np.sort(np.linalg.eigvalsh(A_plus))
     assert observed == pytest.approx(expected, rel=1e-6, abs=1e-6)
 
@@ -88,6 +88,6 @@ def test_auto_wrapper_with_zero_prior():
     assert np.all(col_norms <= 1.0 + 1e-8)
 
     # Spectrum should equal beta' since the prior is zero.
-    expected = np.sort(np.array(res.beta_prime))
+    expected = np.sort(res.beta_prime)
     observed = np.sort(np.linalg.eigvalsh(res.X @ res.X.T))
     assert observed == pytest.approx(expected, rel=1e-6, abs=1e-6)
