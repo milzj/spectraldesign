@@ -9,6 +9,8 @@ from .spectral_design import (
 	compute_spectral_design,
 	compute_spectral_design_from_factor,
 	compute_spectral_design_auto,
+    compute_spectral_design_no_prior,
+    flip_columns_matching_factor,
 )
 
 __all__ = [
@@ -16,6 +18,8 @@ __all__ = [
 	"compute_spectral_design",
 	"compute_spectral_design_from_factor",
 	"compute_spectral_design_auto",
+    "compute_spectral_design_no_prior",
+    "flip_columns_matching_factor"
 	"AllocationSolution",
 	"SpectralDesignResult",
 	"__version__",

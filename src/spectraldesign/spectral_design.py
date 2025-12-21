@@ -23,6 +23,7 @@ class SpectralDesignResult(NamedTuple):
     caps: np.ndarray | None = None
     eigenvalues: np.ndarray | None = None
     eigenvectors: np.ndarray | None = None
+    relaxation_optimal_value: float | None = None
     optimal_value: float | None = None
 
 
@@ -77,7 +78,7 @@ def _orthogonal_equalize_diagonal(
     return R
 
 
-def construct_zero_prior_design(d: int, k: int) -> np.ndarray:
+def compute_spectral_design_no_prior(d: int, k: int) -> SpectralDesignResult:
     """Globally optimal design for A = 0 and k >= d+1 (Fourier / trigonometric construction).
 
     Returns a matrix X ∈ R^{d×k} whose columns x^i are given by
@@ -125,7 +126,7 @@ def construct_zero_prior_design(d: int, k: int) -> np.ndarray:
         # Global scaling √(2/d)
         X *= math.sqrt(2.0 / float(d))
 
-    return SpectralDesignResult(X=X)
+    return SpectralDesignResult(X=X, relaxation_optimal_value=d / k)
 
 def _design_from_eigendecomposition(
     eigvals: np.ndarray, eigvecs: np.ndarray, k: int, tol: float
@@ -166,6 +167,7 @@ def _design_from_eigendecomposition(
         caps=alloc.caps,
         eigenvalues=eigvals,
         eigenvectors=eigvecs,
+        relaxation_optimal_value=alloc.relaxation_optimal_value,
     )
 
 
@@ -187,7 +189,7 @@ def compute_spectral_design(A: np.ndarray, k: int, tol: float = 1e-9) -> Spectra
     return _design_from_eigendecomposition(eigvals, eigvecs, k, tol)
 
 
-def compute_spectral_design_from_factor(X0: np.ndarray, k: int, tol: float = 1e-9) -> SpectralDesignResult:
+def compute_spectral_design_from_factor(X0: np.ndarray, k: int, tol: float = 1e-12) -> SpectralDesignResult:
     """Construct a spectral design when a factor ``X0`` with ``A = X0 X0^T`` is given."""
 
     if X0.ndim != 2:
@@ -214,7 +216,7 @@ def _compute_optimal_value(M):
     return np.sum(1/eigvals)
 
 def _compute_spectral_design_auto(
-    *, A: np.ndarray | None = None, X0: np.ndarray | None = None, k: int, d: int | None = None, tol: float = 1e-9
+    *, A: np.ndarray | None = None, X0: np.ndarray | None = None, k: int, d: int | None = None, tol: float = 1e-12
 ) -> SpectralDesignResult:
     """Convenience wrapper: accepts a matrix ``A``, a factor ``X0``, or neither.
 
@@ -231,7 +233,7 @@ def _compute_spectral_design_auto(
     if A is None and X0 is None:
         if d is None or d <= 0:
             raise ValueError("When neither A nor X0 is given, a positive dimension d is required")
-        A = np.zeros((d, d), dtype=float)
+        return compute_spectral_design_no_prior(d,k)
 
     if X0 is not None:
         return compute_spectral_design_from_factor(X0, k, tol)
@@ -239,12 +241,52 @@ def _compute_spectral_design_auto(
 
 
 def compute_spectral_design_auto(
-    *, A: np.ndarray | None = None, X0: np.ndarray | None = None, k: int, d: int | None = None, tol: float = 1e-9
+    *, A: np.ndarray | None = None, X0: np.ndarray | None = None, k: int, d: int | None = None, 
+    tol: float = 1e-12, test: bool = False
 ) -> SpectralDesignResult:
     
     res = _compute_spectral_design_auto(A=A, X0=X0, k=k, d=d, tol=tol)
     X = res.X
-    if res.optimal_value is not None:
+    if A is not None and test == True:
         value = _compute_optimal_value(A + X@X.T)
+        res.optimal_value = value
         assert abs(value - res.optimal_value) <= tol
     return res
+
+def flip_columns_matching_factor(X: np.ndarray, X0: np.ndarray, tol: float = 1e-12) -> np.ndarray:
+    """
+    Given A = X0 X0^T and a design matrix X, flip the sign of any column of X
+    that coincides with a column of X0 (within a tolerance).
+
+    Parameters
+    ----------
+    X : np.ndarray, shape (d, k)
+        Design matrix to be adjusted.
+    X0 : np.ndarray, shape (d, m)
+        Factor matrix such that A = X0 X0^T.
+    tol : float, optional
+        Absolute tolerance used to decide column equality.
+
+    Returns
+    -------
+    np.ndarray
+        Copy of X with matching columns replaced by their negatives.
+    """
+    if X.ndim != 2 or X0.ndim != 2:
+        raise ValueError("X and X0 must be 2D matrices")
+    if X.shape[0] != X0.shape[0]:
+        raise ValueError("X and X0 must have the same number of rows")
+
+    X_flipped = X.copy()
+    d, k = X.shape
+    _, m0 = X0.shape
+
+    for j in range(k):
+        col = X_flipped[:, j:j+1]  # (d, 1)
+        # Compare against all columns of X0 via broadcasting.
+        diff = np.abs(X0 - col)        # (d, m0)
+        max_diff = diff.max(axis=0)    # (m0,)
+        if np.any(max_diff <= tol):
+            X_flipped[:, j] *= -1.0
+
+    return X_flipped

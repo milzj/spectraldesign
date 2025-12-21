@@ -31,7 +31,7 @@ class AllocationSolution:
     beta_star: np.ndarray
     beta_prime: np.ndarray
     caps: np.ndarray
-    optimal_value: float
+    relaxation_optimal_value: float
 
 def _build_caps(t: np.ndarray, hat_d: int) -> np.ndarray:
     """Construct the cap vector ``u`` as defined in the relaxation."""
@@ -39,12 +39,10 @@ def _build_caps(t: np.ndarray, hat_d: int) -> np.ndarray:
     d = len(t)
     return np.array([t[j + hat_d] if j < d - hat_d else math.inf for j in range(d)])
 
-
 def _beta_for_c(t: np.ndarray, caps: np.ndarray, c: float) -> np.ndarray:
     """Evaluate ``beta(c)``: projection of ``c 1`` onto ``[t, u] - t``."""
 
     return np.clip(c, t, caps) - t
-
 
 def _sum_beta(t: np.ndarray, caps: np.ndarray, c: float) -> float:
     """Sum the allocation increments for a given level ``c``."""
@@ -55,12 +53,12 @@ def _find_c_star(t: np.ndarray, caps: np.ndarray, k: int, hat_d: int, tol: float
     """Locate the unique level ``c`` such that ``sum(beta(c)) = k``."""
 
     if k <= 0:
-        return float(t[0])
+        return t[0]
 
     infinite_capacity = np.any(np.isinf(caps))
     finite_mask = np.isfinite(caps)
     max_possible = float(np.sum(np.maximum(0.0, caps[finite_mask] - t[finite_mask])))
-    if not infinite_capacity and max_possible + 1e-12 < k:
+    if not infinite_capacity and max_possible  < k:
         raise ValueError("Infeasible budget: caps cannot accommodate requested mass k")
 
     low = float(t[0])
@@ -85,7 +83,6 @@ def _find_c_star(t: np.ndarray, caps: np.ndarray, k: int, hat_d: int, tol: float
             high = mid
     return high
 
-
 def _beta_prime(t: np.ndarray, caps: np.ndarray, c_star: float, hat_d: int) -> np.ndarray:
     """Construct the sparse ``beta'`` that is permutation-equivalent to ``beta_star``."""
 
@@ -98,7 +95,7 @@ def _beta_prime(t: np.ndarray, caps: np.ndarray, c_star: float, hat_d: int) -> n
         beta_prime[:s_greater] = np.maximum(0.0, c_star - t[:s_greater])
     return beta_prime
 
-def _compute_relaxation_objective_inverse(t: np.ndarray, beta: np.ndarray) -> float:
+def _compute_relaxation_optimal_value(t: np.ndarray, beta: np.ndarray) -> float:
     """Compute the optimal value of Rel-Gen for f(x) = sum 1/x_i.
 
     Parameters
@@ -135,63 +132,10 @@ def compute_optimal_betas(t: np.array, k: int, tol: float = 1e-12) -> Allocation
     assert np.abs(_sum_beta(t, caps, c_star) - k) <= tol
     beta_star = _beta_for_c(t, caps, c_star)
     beta_prime = _beta_prime(t, caps, c_star, hat_d)
-    optimal_value = _compute_relaxation_objective_inverse(t, beta_star)
+    relaxation_optimal_value = _compute_relaxation_optimal_value(t, beta_star)
 
     return AllocationSolution(c_star=c_star, beta_star=beta_star, 
                               beta_prime=beta_prime, caps=caps, 
-                              optimal_value=optimal_value)
-
-def compute_relaxation_optimal_value(
-    t: np.ndarray,
-    k: int,
-    f: callable,
-    tol: float = 1e-9,
-) -> float:
-    """Compute the optimal value of the general relaxation (Rel-Gen).
-
-    Solves:
-        min f(t_1 + β_1, ..., t_d + β_d)
-        subject to:
-            β ∈ ℝ_+^d
-            t_j + β_j ≤ t_{j+d̂}  for j = 1,...,d-d̂  (where d̂ = min{d,k})
-            sum(β_j) ≤ k
-
-    Parameters
-    ----------
-    t : Iterable[float]
-        Eigenvalue vector (sorted, nondecreasing).
-    k : int
-        Budget constraint on sum(β).
-    f : callable
-        Objective function mapping a vector (t + β) to a scalar.
-        Should accept a list/array of floats and return a float.
-    tol : float, optional
-        Tolerance for the allocation solver (default: 1e-9).
-
-    Returns
-    -------
-    float
-        The optimal objective value f(t + β*).
-
-    Examples
-    --------
-    >>> t = [1.0, 2.0, 3.0, 4.0]
-    >>> k = 5
-    >>> # Minimize sum of reciprocals
-    >>> f = lambda x: sum(1.0/xi for xi in x)
-    >>> opt_val = compute_relaxation_optimal_value(t, k, f)
-    >>> # Minimize sum of squares of reciprocals
-    >>> f2 = lambda x: sum(1.0/xi**2 for xi in x)
-    >>> opt_val2 = compute_relaxation_optimal_value(t, k, f2)
-    """
-    # Solve the relaxation to get optimal β*
-    alloc = compute_optimal_betas(t, k, tol)
-
-    t_plus_beta = t + alloc.beta_star
-
-    # Evaluate objective at optimal point
-    obj_value = f(t_plus_beta)
-
-    return float(obj_value)
+                              relaxation_optimal_value=relaxation_optimal_value)
 
 

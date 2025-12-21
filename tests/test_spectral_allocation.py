@@ -10,9 +10,7 @@ from spectraldesign.spectral_allocation import (
     _sum_beta,
     _find_c_star,
     _beta_prime,
-    _compute_relaxation_objective_inverse
 )
-
 
 def test_allocation_example_matches_derivation():
     """Validate against the worked example from the notes."""
@@ -29,7 +27,7 @@ def test_allocation_example_matches_derivation():
 @pytest.mark.parametrize(
     "t,k",
     [
-        (np.array([0., 0., 0.0, 0.0]), 100),
+        (np.array([0.0, 0.0, 0.0, 0.0]), 100),
         (np.array([0.4, 1.2, 1.5, 2.0]), 3),
         (np.array([0.5, 1.0, 2.0, 4.0]), 2),
         (np.array([0.4, 0.8, 1.6, 3.2, 6.4]), 3),
