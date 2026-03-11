@@ -19,6 +19,72 @@ Then install the package with development dependencies:
 pip install -e ".[dev]"
 ```
 
+## Usage
+
+The main entry points return a `SpectralDesignResult`. The most important field is
+`result.X`, the design matrix whose columns are the design points.
+
+### No-prior design
+
+Use this when you want the optimal design for `A = 0`.
+
+```python
+import spectraldesign
+
+result = spectraldesign.compute_spectral_design_no_prior(d=2, k=8)
+
+print(result.X.shape)
+print(result.relaxation_optimal_value)
+```
+
+### Design with a prior matrix
+
+Use `compute_spectral_design` when you already have a symmetric positive semidefinite matrix `A`.
+
+```python
+import numpy as np
+import spectraldesign
+
+A = np.array([[1.0, 0.2], [0.2, 0.5]])
+result = spectraldesign.compute_spectral_design(A=A, k=6)
+
+print(result.X)
+print(result.eigenvalues)
+```
+
+### Design from prior vectors
+
+Use `compute_spectral_design_auto` with `X0` when your prior information is given as vectors,
+for example one-prior or two-prior designs in 2D.
+
+```python
+import numpy as np
+import spectraldesign
+
+X0 = np.array([[1.0], [0.0]])
+result = spectraldesign.compute_spectral_design_auto(X0=X0, k=4)
+
+print(result.X)
+```
+
+For two prior vectors, stack them as columns:
+
+```python
+import numpy as np
+import spectraldesign
+
+X0 = np.array([[1.0, 0.0], [0.0, 1.0]])
+result = spectraldesign.compute_spectral_design_auto(X0=X0, k=5)
+
+print(result.X)
+```
+
+If you need a single convenience entry point, `compute_spectral_design_auto` also supports:
+
+- `compute_spectral_design_auto(d=2, k=8)` for the no-prior case
+- `compute_spectral_design_auto(A=A, k=6)` for a prior matrix
+- `compute_spectral_design_auto(X0=X0, k=4)` for prior vectors
+
 ### Running Tests
 
 To run the test suite, use:
