@@ -211,6 +211,7 @@ def compute_spectral_design_from_factor(X0: np.ndarray, k: int, tol: float = 1e-
 
 def _compute_optimal_value(M):
 
+    M = 0.5 * (M + M.T)
     eigvals, eigvecs = np.linalg.eigh(M)
 
     return np.sum(1/eigvals)
@@ -242,15 +243,18 @@ def _compute_spectral_design_auto(
 
 def compute_spectral_design_auto(
     *, A: np.ndarray | None = None, X0: np.ndarray | None = None, k: int, d: int | None = None, 
-    tol: float = 1e-12, test: bool = False
+    tol: float = 1e-12, test: bool = True
 ) -> SpectralDesignResult:
     
     res = _compute_spectral_design_auto(A=A, X0=X0, k=k, d=d, tol=tol)
     X = res.X
     if A is not None and test == True:
-        value = _compute_optimal_value(A + X@X.T)
-        res.optimal_value = value
-        assert abs(value - res.optimal_value) <= tol
+        optimal_value = _compute_optimal_value(A + X@X.T)
+        if not np.isclose(optimal_value, res.relaxation_optimal_value, rtol=tol, atol=tol):
+            raise RuntimeError(
+                "Computed design value does not match relaxation optimum within tolerance: "
+                f"optimal_value={optimal_value}, relaxation_optimal_value={res.relaxation_optimal_value}, tol={tol}"
+            )
     return res
 
 def flip_columns_matching_factor(X: np.ndarray, X0: np.ndarray, tol: float = 1e-12) -> np.ndarray:

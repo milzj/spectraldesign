@@ -95,6 +95,29 @@ def test_design_from_factor_matches_direct():
     assert res_A.c_star == pytest.approx(res_X0.c_star, rel=1e-8, abs=1e-10)
 
 
+def test_auto_wrapper_with_two_prior_vectors():
+    """Auto wrapper should handle a two-column prior factor matrix."""
+
+    X0 = np.array([[1.0, 0.0], [0.0, 1.0]], dtype=float)
+    k = 3
+    A = X0 @ X0.T
+
+    res_A = spectraldesign.compute_spectral_design_auto(A=A, k=k)
+    res_X0 = spectraldesign.compute_spectral_design_auto(X0=X0, k=k)
+
+    A_plus_A = A + res_A.X @ res_A.X.T
+    A_plus_X0 = A + res_X0.X @ res_X0.X.T
+
+    evals_A = np.linalg.eigvalsh(A_plus_A)
+    evals_X0 = np.linalg.eigvalsh(A_plus_X0)
+    assert evals_X0 == pytest.approx(evals_A, rel=1e-6, abs=1e-6)
+
+    assert np.all(np.linalg.norm(res_X0.X, axis=0) <= 1.0 + 1e-8)
+    assert spectral_function(A_plus_X0) == pytest.approx(
+        res_X0.relaxation_optimal_value, rel=1e-6, abs=1e-6
+    )
+
+
 def test_auto_wrapper_accepts_either_path():
     """compute_spectral_design_auto must route correctly for A, X0, and zero prior."""
 
