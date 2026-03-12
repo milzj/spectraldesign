@@ -41,7 +41,12 @@ def _label_counts(ax: plt.Axes, counts: dict[tuple[float, float], int], radius: 
         else:
             scale = min(1.0, radius / norm)
             tx, ty = x1 * scale, x2 * scale
-        ax.text(tx, ty, str(count), ha="center", va="center", fontsize=11, color="k")
+        ax.text(
+            tx, ty, str(count),
+            ha="center", va="center",
+            fontsize=11, color="k",
+            bbox=dict(facecolor="white", edgecolor="none", boxstyle="round,pad=0.2")
+        )
 
 
 def _format_axis(ax: plt.Axes, title: str, limit: float) -> None:
@@ -65,8 +70,11 @@ def _annotate_k(ax: plt.Axes, k: int) -> None:
 def _plot_no_prior_case(ax: plt.Axes, X: np.ndarray, color: str, k: int) -> None:
     ax.scatter(X[0], X[1], c=color, s=20)
     _label_counts(ax, _column_counts(X), radius=0.8)
-    _format_axis(ax, f"F* = {_spectral_value(X):.2g}", limit=1.04)
+    #_format_axis(ax, f"F* = {_spectral_value(X):.2g}", limit=1.04)
+    _format_axis(ax, f"", limit=1.04)
     _annotate_k(ax, k)
+    ax.axhline(0.0, color="gray", linewidth=0.5)
+    ax.axvline(0.0, color="gray", linewidth=0.5)
 
 
 def _unit_vector(angle_deg: float) -> np.ndarray:
