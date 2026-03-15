@@ -45,7 +45,7 @@ def _label_counts(ax: plt.Axes, counts: dict[tuple[float, float], int], radius: 
             tx, ty, str(count),
             ha="center", va="center",
             fontsize=11, color="k",
-            bbox=dict(facecolor="white", edgecolor="none", boxstyle="round,pad=0.2")
+            bbox=dict(facecolor="white", edgecolor="none", boxstyle="round,pad=0.08")
         )
 
 
@@ -64,14 +64,14 @@ def _save_figure(fig: plt.Figure, output_path: Path) -> None:
 
 
 def _annotate_k(ax: plt.Axes, k: int) -> None:
-    ax.text(0.98, 0.98, f"k = {k}", transform=ax.transAxes, ha="right", va="top", fontsize="small")
+    ax.text(0.98, 0.98, f"(k = {k})", transform=ax.transAxes, ha="right", va="top")
 
 
 def _plot_no_prior_case(ax: plt.Axes, X: np.ndarray, color: str, k: int) -> None:
-    ax.scatter(X[0], X[1], c=color, s=20)
+    ax.scatter(X[0], X[1], c=color, s=80)
     _label_counts(ax, _column_counts(X), radius=0.8)
     #_format_axis(ax, f"F* = {_spectral_value(X):.2g}", limit=1.04)
-    _format_axis(ax, f"", limit=1.04)
+    _format_axis(ax, f"", limit=1.08)
     _annotate_k(ax, k)
     ax.axhline(0.0, color="gray", linewidth=0.5)
     ax.axvline(0.0, color="gray", linewidth=0.5)
@@ -154,13 +154,13 @@ def _plot_prior_case(ax: plt.Axes, X0: np.ndarray, k: int) -> None:
         )
 
     stacked = np.hstack([X0, X])
-    limit = max(1.04, 1.08 * float(np.linalg.norm(stacked, axis=0).max()))
+    limit = max(1.08, 1.08 * float(np.linalg.norm(stacked, axis=0, ord = np.inf).max()))
     _label_counts(ax, X_counts)
-    _format_axis(ax, "", limit=limit)
     _annotate_k(ax, k)
+    _format_axis(ax, "", limit=limit)
     ax.axhline(0.0, color="gray", linewidth=0.5)
     ax.axvline(0.0, color="gray", linewidth=0.5)
-    ax.legend(loc="center", fontsize="small")
+    #ax.legend(loc="center", fontsize="small")
 
 
 def _plot_prior_group(X0: np.ndarray, ks: list[int], output_path: Path, subplot_prefix: str) -> None:
@@ -193,9 +193,9 @@ def plot_prior_examples() -> None:
     two_prior_output_dir.mkdir(parents=True, exist_ok=True)
 
     ks = list(range(1, 13))
-    one_prior_angles = [17.0, 53.0]
+    one_prior_angles = [17.0, 63.0]
     two_prior_angle_pairs = [
-        (17.0, 73.0),
+        (17.0, 63.0),
         (-24.0, 138.0),
         (31.0, 166.0),
         (-58.0, 104.0),
@@ -204,14 +204,14 @@ def plot_prior_examples() -> None:
         (24.0, 61.0),
     ]
 
-    for scale in [0.7, 1.0, 1.3]:
+    for scale in [1.3, 0.7, 1.0]:
         examples = [scale * _unit_vector(angle) for angle in one_prior_angles]
         tag = _scaling_tag(scale)
         for idx, X0 in enumerate(examples, start=1):
             prefix = f"one_prior_design_{tag}_example_{idx}"
             _plot_prior_group(X0, ks, one_prior_output_dir / f"{prefix}.png", prefix)
 
-    for scale_first, scale_second in [(1.0, 1.0), (1.3, 1.55), (1.3, 0.7)]:
+    for scale_first, scale_second in [(1.15, 1.35), (1.0, 1.0), (1.3, 0.7)]:
         examples = [
             np.hstack([scale_first * _unit_vector(a1), scale_second * _unit_vector(a2)])
             for a1, a2 in two_prior_angle_pairs
