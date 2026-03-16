@@ -49,7 +49,7 @@ def _sum_beta(t: np.ndarray, caps: np.ndarray, c: float) -> float:
 
     return np.sum(_beta_for_c(t, caps, c))
 
-def _find_c_star(t: np.ndarray, caps: np.ndarray, k: int, hat_d: int, tol: float = 1e-9) -> float:
+def _find_c_star(t: np.ndarray, caps: np.ndarray, k: int, hat_d: int, tol: float = 1e-13) -> float:
     """Locate the unique level ``c`` such that ``sum(beta(c)) = k``."""
 
     if k <= 0:

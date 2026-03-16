@@ -93,9 +93,18 @@ def test_find_c_star_zero_budget_returns_min_t():
     assert c_star == pytest.approx(t[0])
 
 
-def test_find_c_star_satisfies_budget_constraint():
-    t = np.array([1.0, 1.5, 2.0, 3.0])
-    k = 1
+@pytest.mark.parametrize(
+    "t,k",
+    [
+        (np.array([1.0, 1.5, 2.0, 3.0]), 1),
+        (np.array([0.5, 1.0, 1.5, 2.0, 2.5, 3.0]), 2),
+        (np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]), 3),
+        (np.linspace(0.1, 5.0, 2), 10),
+        (np.linspace(0.5, 10.0, 20), 50),
+        (np.linspace(1.0, 20.0, 50), 100),
+    ],
+)
+def test_find_c_star_satisfies_budget_constraint(t, k):
     hat_d = min(len(t), k)
     caps = _build_caps(t, hat_d)
 
