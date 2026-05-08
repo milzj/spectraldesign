@@ -147,7 +147,7 @@ def benchmark_dimension(
 
     for _ in range(repeats):
         X0 = sample_random_points(d, prior_points, rng)
-        
+
         gc.disable()
         start = time.perf_counter()
         result = spectraldesign.compute_spectral_design_auto(
