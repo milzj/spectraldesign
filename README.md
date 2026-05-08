@@ -147,7 +147,8 @@ python scripts/runtime_analysis.py --plot-path output/runtime_vs_d.png
 ```
 
 This prints a tabular timing summary to stdout and writes the plot to
-`output/runtime_vs_d.png`.
+`output/runtime_vs_d.png`, also saving `output/runtime_vs_d.pdf` and a
+CSV summary alongside the plot outputs.
 
 Useful options:
 
