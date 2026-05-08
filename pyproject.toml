@@ -46,6 +46,9 @@ python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = [
     "--verbose",
+    "--cov=spectraldesign",
+    "--cov-report=xml",
+    "--cov-report=term-missing",
 ]
 
 [tool.ruff]
