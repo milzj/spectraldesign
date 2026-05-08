@@ -126,6 +126,36 @@ This writes figures under `examples/output/`, including:
 - `examples/output/two_prior_design/two_prior_design_scaling1_1_scaling2_1_example_1.png`
 - `examples/output/two_prior_design/two_prior_design_scaling1_1_scaling2_1_example_1_k_2.png`
 
+## Runtime analysis
+
+The script `scripts/runtime_analysis.py` benchmarks the runtime of
+`compute_spectral_design_auto` as the ambient dimension `d` grows.
+For each dimension, it:
+
+- samples `d // 2` random prior vectors in `\mathbb{R}^d`
+- computes the remaining `d - d // 2` design points
+- repeats the solve multiple times
+- reports mean, standard deviation, minimum, and maximum runtime
+- saves a log-log plot of runtime versus dimension
+
+### Running the benchmark
+
+From the project root, run:
+
+```bash
+python scripts/runtime_analysis.py --plot-path output/runtime_vs_d.png
+```
+
+This prints a tabular timing summary to stdout and writes the plot to
+`output/runtime_vs_d.png`.
+
+Useful options:
+
+- `--dimensions 2 4 8 16 32` to benchmark specific dimensions
+- `--repeats 20` to reduce or increase the number of runs per dimension
+- `--seed 123` to change the random seed
+- `--validate` to enable the solver's post-solve validation checks
+
 ### Code Quality
 
 Check code style and formatting:
