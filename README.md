@@ -93,11 +93,9 @@ To run the test suite, use:
 pytest
 ```
 
-## Examples
+## Design illustrations
 
-## Example: Design illustrations
-
-The script `design_illustrations.py` generates 2D graphical examples for:
+The script `scripts/design_illustrations.py` generates 2D graphical examples for:
 
 - No-prior designs
 - One prior vector (`\boldsymbol{X}_0 \in \mathbb{R}^{2 \times 1}`)
@@ -112,19 +110,18 @@ vector(s) together with the optimized design points.
 You can regenerate all plots by running from the project root:
 
 ```bash
-cd examples
-python ./design_illustrations.py
+python scripts/design_illustrations.py
 ```
 
-This writes figures under `examples/output/`, including:
+This writes figures under `output/design_illustrations/`, including:
 
-- `examples/output/no_prior_design/no_prior_designs.png`
-- `examples/output/no_prior_design/no_prior_design_k_2.png`
-- `examples/output/no_prior_design/zero_prior_polynomial_design_k_2.png`
-- `examples/output/one_prior_design/one_prior_design_scaling_1_example_1.png`
-- `examples/output/one_prior_design/one_prior_design_scaling_1_example_1_k_2.png`
-- `examples/output/two_prior_design/two_prior_design_scaling1_1_scaling2_1_example_1.png`
-- `examples/output/two_prior_design/two_prior_design_scaling1_1_scaling2_1_example_1_k_2.png`
+- `output/design_illustrations/no_prior_design/no_prior_designs.png`
+- `output/design_illustrations/no_prior_design/no_prior_design_k_2.png`
+- `output/design_illustrations/no_prior_design/zero_prior_polynomial_design_k_2.png`
+- `output/design_illustrations/one_prior_design/one_prior_design_scaling_1_example_1.png`
+- `output/design_illustrations/one_prior_design/one_prior_design_scaling_1_example_1_k_2.png`
+- `output/design_illustrations/two_prior_design/two_prior_design_scaling1_1_scaling2_1_example_1.png`
+- `output/design_illustrations/two_prior_design/two_prior_design_scaling1_1_scaling2_1_example_1_k_2.png`
 
 ## Runtime analysis
 
@@ -143,12 +140,15 @@ For each dimension, it:
 From the project root, run:
 
 ```bash
-python scripts/runtime_analysis.py --plot-path output/runtime_vs_d.png
+python scripts/runtime_analysis.py
 ```
 
-This prints a tabular timing summary to stdout and writes the plot to
-`output/runtime_vs_d.png`, also saving `output/runtime_vs_d.pdf` and a
-CSV summary alongside the plot outputs.
+This prints a tabular timing summary to stdout and writes plot/data files under
+`output/runtime_analysis/` using a timestamped basename, for example:
+
+- `runtime_vs_d_13_05_2026_153045.pdf`
+- `runtime_vs_d_13_05_2026_153045.png`
+- `runtime_vs_d_13_05_2026_153045.csv`
 
 Useful options:
 

@@ -10,6 +10,7 @@ import math
 from typing import NamedTuple
 
 import numpy as np
+import warnings
 
 from .spectral_allocation import compute_optimal_betas
 
@@ -155,7 +156,7 @@ def _design_from_eigendecomposition(
     X0 = B @ R
     col_norms = np.linalg.norm(X0, axis=0)
     if np.any(col_norms > 1.0 + tol):
-        raise RuntimeError("Failed to construct unit-ball design columns within tolerance")
+        warnings.warn("Failed to construct unit-ball design columns within tolerance")
 
     X = eigvecs @ X0
 

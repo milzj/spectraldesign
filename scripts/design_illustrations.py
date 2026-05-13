@@ -60,7 +60,9 @@ def _format_axis(ax: plt.Axes, title: str, limit: float) -> None:
 
 
 def _save_figure(fig: plt.Figure, output_path: Path) -> None:
-    fig.savefig(output_path, dpi=300, bbox_inches="tight", pad_inches=0.03)
+    base_path = output_path.with_suffix("")
+    fig.savefig(base_path.with_suffix(".png"), dpi=300, bbox_inches="tight", pad_inches=0.03)
+    fig.savefig(base_path.with_suffix(".pdf"), dpi=300, bbox_inches="tight", pad_inches=0.03)
 
 
 def _annotate_k(ax: plt.Axes, k: int) -> None:
@@ -154,7 +156,7 @@ def _plot_prior_case(ax: plt.Axes, X0: np.ndarray, k: int) -> None:
         )
 
     stacked = np.hstack([X0, X])
-    limit = max(1.08, 1.08 * float(np.linalg.norm(stacked, axis=0, ord = np.inf).max()))
+    limit = max(1.08, 1.08 * float(np.linalg.norm(stacked, axis=0, ord=np.inf).max()))
     _label_counts(ax, X_counts)
     _annotate_k(ax, k)
     _format_axis(ax, "", limit=limit)
@@ -178,7 +180,7 @@ def _plot_prior_group(X0: np.ndarray, ks: list[int], output_path: Path, subplot_
         _save_figure(single_fig, output_path.parent / f"{subplot_prefix}_k_{k}.png")
         plt.close(single_fig)
 
-    for ax in flat_axes[len(ks) :]:
+    for ax in flat_axes[len(ks):]:
         ax.axis("off")
 
     fig.tight_layout()
