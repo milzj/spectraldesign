@@ -47,8 +47,8 @@ python_functions = ["test_*"]
 addopts = [
     "--verbose",
     "--cov=spectraldesign",
+    "--cov-report=xml",
     "--cov-report=term-missing",
-    "--cov-report=html",
 ]
 
 [tool.ruff]

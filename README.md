@@ -93,11 +93,9 @@ To run the test suite, use:
 pytest
 ```
 
-## Examples
+## Design illustrations
 
-## Example: Design illustrations
-
-The script `design_illustrations.py` generates 2D graphical examples for:
+The script `scripts/design_illustrations.py` generates 2D graphical examples for:
 
 - No-prior designs
 - One prior vector (`\boldsymbol{X}_0 \in \mathbb{R}^{2 \times 1}`)
@@ -112,19 +110,52 @@ vector(s) together with the optimized design points.
 You can regenerate all plots by running from the project root:
 
 ```bash
-cd examples
-python ./design_illustrations.py
+python scripts/design_illustrations.py
 ```
 
-This writes figures under `examples/output/`, including:
+This writes figures under `output/design_illustrations/`, including:
 
-- `examples/output/no_prior_design/no_prior_designs.png`
-- `examples/output/no_prior_design/no_prior_design_k_2.png`
-- `examples/output/no_prior_design/zero_prior_polynomial_design_k_2.png`
-- `examples/output/one_prior_design/one_prior_design_scaling_1_example_1.png`
-- `examples/output/one_prior_design/one_prior_design_scaling_1_example_1_k_2.png`
-- `examples/output/two_prior_design/two_prior_design_scaling1_1_scaling2_1_example_1.png`
-- `examples/output/two_prior_design/two_prior_design_scaling1_1_scaling2_1_example_1_k_2.png`
+- `output/design_illustrations/no_prior_design/no_prior_designs.png`
+- `output/design_illustrations/no_prior_design/no_prior_design_k_2.png`
+- `output/design_illustrations/no_prior_design/zero_prior_polynomial_design_k_2.png`
+- `output/design_illustrations/one_prior_design/one_prior_design_scaling_1_example_1.png`
+- `output/design_illustrations/one_prior_design/one_prior_design_scaling_1_example_1_k_2.png`
+- `output/design_illustrations/two_prior_design/two_prior_design_scaling1_1_scaling2_1_example_1.png`
+- `output/design_illustrations/two_prior_design/two_prior_design_scaling1_1_scaling2_1_example_1_k_2.png`
+
+## Runtime analysis
+
+The script `scripts/runtime_analysis.py` benchmarks the runtime of
+`compute_spectral_design_auto` as the ambient dimension `d` grows.
+For each dimension, it:
+
+- samples `d // 2` random prior vectors in `\mathbb{R}^d`
+- computes the remaining `d - d // 2` design points
+- repeats the solve multiple times
+- reports mean, standard deviation, minimum, and maximum runtime
+- saves a log-log plot of runtime versus dimension
+
+### Running the benchmark
+
+From the project root, run:
+
+```bash
+python scripts/runtime_analysis.py
+```
+
+This prints a tabular timing summary to stdout and writes plot/data files under
+`output/runtime_analysis/` using a timestamped basename, for example:
+
+- `runtime_vs_d_13_05_2026_153045.pdf`
+- `runtime_vs_d_13_05_2026_153045.png`
+- `runtime_vs_d_13_05_2026_153045.csv`
+
+Useful options:
+
+- `--dimensions 2 4 8 16 32` to benchmark specific dimensions
+- `--repeats 20` to reduce or increase the number of runs per dimension
+- `--seed 123` to change the random seed
+- `--validate` to enable the solver's post-solve validation checks
 
 ### Code Quality
 
