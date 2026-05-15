@@ -3,7 +3,14 @@
 
 # spectraldesign
 
-A Python package for spectral design.
+A Python package for spectral design. 
+
+`spectraldesign` is a Python package accompanying the manuscript
+*Optimal Spectral Design with Prior Information* by Anton J. Kleywegt,
+Johannes Milz, Mohit Singh, and Weijun Xie (2026). The package provides
+routines for computing optimal spectral designs with and without prior
+information, together with scripts for reproducing the numerical
+illustrations reported in the manuscript.
 
 ## Development Setup
 
