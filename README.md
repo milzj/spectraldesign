@@ -1,3 +1,6 @@
+[![DOI](https://zenodo.org/badge/1119008077.svg)](https://doi.org/10.5281/zenodo.20172844)
+
+
 # spectraldesign
 
 A Python package for spectral design.
