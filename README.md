@@ -123,6 +123,29 @@ This writes figures under `output/design_illustrations/`, including:
 - `output/design_illustrations/two_prior_design/two_prior_design_scaling1_1_scaling2_1_example_1.png`
 - `output/design_illustrations/two_prior_design/two_prior_design_scaling1_1_scaling2_1_example_1_k_2.png`
 
+## Common optimal design sets
+
+The script `scripts/generate_common_optimal_design_plots.py` generates sampled
+2D visualizations of the common optimal design set for the one-prior and
+two-prior examples. It also checks that the sampled common-set designs agree
+on a chosen spectral objective value.
+
+### Reproducing the common-set plots
+
+From the project root, run:
+
+```bash
+python scripts/generate_common_optimal_design_plots.py
+```
+
+This writes the outputs under `output/design_illustrations/`, inside:
+
+- `output/design_illustrations/common_optimal_design_sets_D_objective/one_prior_common_optimal_set/`
+- `output/design_illustrations/common_optimal_design_sets_D_objective/two_prior_common_optimal_set/`
+
+Each case includes per-sample PNG/PDF figures, a contact sheet, a multipage PDF,
+and a diagnostics CSV.
+
 ## Runtime analysis
 
 The script `scripts/runtime_analysis.py` benchmarks the runtime of
