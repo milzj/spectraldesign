@@ -194,7 +194,7 @@ def plot_prior_examples() -> None:
     one_prior_output_dir.mkdir(parents=True, exist_ok=True)
     two_prior_output_dir.mkdir(parents=True, exist_ok=True)
 
-    ks = list(range(1, 13))
+    ks = list(range(3, 12))
     one_prior_angles = [17.0, 63.0]
     two_prior_angle_pairs = [
         (17.0, 63.0),
@@ -206,26 +206,26 @@ def plot_prior_examples() -> None:
         (24.0, 61.0),
     ]
 
-    for scale in [1.3, 0.7, 1.0]:
-        examples = [scale * _unit_vector(angle) for angle in one_prior_angles]
-        tag = _scaling_tag(scale)
-        for idx, X0 in enumerate(examples, start=1):
-            prefix = f"one_prior_design_{tag}_example_{idx}"
-            _plot_prior_group(X0, ks, one_prior_output_dir / f"{prefix}.png", prefix)
+    scale = 1.3
+    examples = [scale * _unit_vector(angle) for angle in one_prior_angles]
+    tag = _scaling_tag(scale)
+    X0 = examples[0]
+    prefix = f"one_prior_design_{tag}_example_1"
+    _plot_prior_group(X0, ks, one_prior_output_dir / f"{prefix}.png", prefix)
 
-    for scale_first, scale_second in [(1.15, 1.35), (1.0, 1.0), (1.3, 0.7)]:
-        examples = [
-            np.hstack([scale_first * _unit_vector(a1), scale_second * _unit_vector(a2)])
-            for a1, a2 in two_prior_angle_pairs
-        ]
-        tag = _scaling_tag(scale_first, scale_second)
-        for idx, X0 in enumerate(examples, start=1):
-            prefix = f"two_prior_design_{tag}_example_{idx}"
-            _plot_prior_group(X0, ks, two_prior_output_dir / f"{prefix}.png", prefix)
+    scale_first, scale_second = (1.15, 1.35)
+    examples = [
+        np.hstack([scale_first * _unit_vector(a1), scale_second * _unit_vector(a2)])
+        for a1, a2 in two_prior_angle_pairs
+    ]
+    tag = _scaling_tag(scale_first, scale_second)
+    X0 = examples[0]
+    prefix = f"two_prior_design_{tag}_example_1"
+    _plot_prior_group(X0, ks, two_prior_output_dir / f"{prefix}.png", prefix)
 
 
 def main() -> None:
-    plot_no_prior_examples()
+    plot_no_prior_examples(ks=[3, 5, 16])
     plot_prior_examples()
 
 

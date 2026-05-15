@@ -1,4 +1,4 @@
-"""Eigenvalue allocation utilities to compute \(c^*\), \(\beta^*\), and \(\beta'\).
+r"""Eigenvalue allocation utilities to compute \(c^*\), \(\beta^*\), and \(\beta'\).
 
 This module implements the allocation described in the accompanying notes:
 
