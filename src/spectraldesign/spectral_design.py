@@ -79,6 +79,118 @@ def _orthogonal_equalize_diagonal(
     return R
 
 
+def _match_column_norms_bendel_mickey(
+    X: np.ndarray, z_target: np.ndarray, tol: float = 1e-10
+) -> np.ndarray:
+    """Match squared column norms via the one-sided generalized Bendel--Mickey algorithm.
+
+    Given a real ``d x N`` matrix ``X`` and an ascending nonnegative target vector
+    ``z_target`` of length ``N`` satisfying ``z_target`` majorized by the squared
+    column norms of ``X`` (which must also be in ascending order), this function
+    returns ``X' = X Q`` for some orthogonal ``Q`` such that ``X' X'^T = X X^T``
+    (singular spectrum preserved) and the squared column norms of ``X'`` equal
+    ``z_target``.
+
+    Each iteration locates the smallest deficit column ``i`` (squared norm below
+    target) and the smallest surplus column ``j > i`` (squared norm above target),
+    and applies a real plane rotation in the ``(i, j)``-plane that pins one of the
+    two columns at its target. At most ``N - 1`` rotations are required, each at a
+    cost of ``O(d)`` flops, for total cost ``O(d N)``.
+
+    Reference:
+        I. S. Dhillon, R. W. Heath Jr., M. A. Sustik, and J. A. Tropp,
+        "Generalized finite algorithms for constructing Hermitian matrices with
+        prescribed diagonal and spectrum," SIAM J. Matrix Anal. Appl.,
+        27(1):61--71, 2005. Algorithm 3.
+
+    Parameters
+    ----------
+    X : ndarray, shape (d, N)
+        Real matrix whose column norms are to be retargeted. Not modified.
+    z_target : ndarray, shape (N,)
+        Ascending nonneg target squared column norms. Must satisfy
+        ``sum(z_target) == sum(col_norms_squared(X))`` and be majorized by the
+        current squared column norms of ``X``.
+    tol : float, optional
+        Absolute tolerance for declaring a column matched.
+
+    Returns
+    -------
+    ndarray, shape (d, N)
+        A copy of ``X`` after the orthogonal column operations.
+    """
+
+    if X.ndim != 2:
+        raise ValueError("X must be a 2D matrix")
+    if z_target.ndim != 1 or z_target.shape[0] != X.shape[1]:
+        raise ValueError("z_target must be a 1D vector of length X.shape[1]")
+
+    N = X.shape[1]
+    Y = X.astype(float, copy=True)
+    if N == 0:
+        return Y
+
+    a = np.einsum("dn,dn->n", Y, Y)
+
+    max_iter = N + 5  # at most N-1 rotations in theory; small margin for fp
+    for _ in range(max_iter):
+        deficit = np.flatnonzero(a < z_target - tol)
+        if deficit.size == 0:
+            break
+        i = int(deficit[0])
+
+        surplus_rel = np.flatnonzero(a[i + 1 :] > z_target[i + 1 :] + tol)
+        if surplus_rel.size == 0:
+            # Majorization should preclude this; bail out rather than spin.
+            break
+        j = int(i + 1 + surplus_rel[0])
+
+        a_i = float(a[i])
+        a_j = float(a[j])
+        t = float(np.dot(Y[:, i], Y[:, j]))
+
+        # Pin whichever column is cheaper to fix exactly.
+        if z_target[i] - a_i <= a_j - z_target[j]:
+            target_val = float(z_target[i])
+        else:
+            # Driving new ||x_i'||^2 to a_i + a_j - z_target[j] forces ||x_j'||^2 = z_target[j].
+            target_val = a_i + a_j - float(z_target[j])
+
+        avg = 0.5 * (a_i + a_j)
+        diff = 0.5 * (a_i - a_j)
+        R = math.hypot(diff, t)
+
+        if R <= 1e-18:
+            # Columns are degenerate (e.g., proportional with equal norms); cannot
+            # change norms via rotation. Bail rather than loop forever.
+            break
+
+        cos_arg = float(np.clip((target_val - avg) / R, -1.0, 1.0))
+        phi = math.atan2(t, diff)
+        theta = 0.5 * (phi + math.acos(cos_arg))
+        c = math.cos(theta)
+        s = math.sin(theta)
+
+        col_i = Y[:, i].copy()
+        col_j = Y[:, j].copy()
+        Y[:, i] = c * col_i + s * col_j
+        Y[:, j] = -s * col_i + c * col_j
+
+        new_a_i = c * c * a_i + 2.0 * c * s * t + s * s * a_j
+        new_a_j = s * s * a_i - 2.0 * c * s * t + c * c * a_j
+        if abs(new_a_i - z_target[i]) <= tol:
+            new_a_i = float(z_target[i])
+        if abs(new_a_j - z_target[j]) <= tol:
+            new_a_j = float(z_target[j])
+        a[i] = new_a_i
+        a[j] = new_a_j
+    else:
+        if float(np.max(np.abs(a - z_target))) > 10.0 * tol:
+            warnings.warn("Bendel-Mickey iteration cap reached without convergence")
+
+    return Y
+
+
 def compute_spectral_design_no_prior(d: int, k: int) -> SpectralDesignResult:
     """Globally optimal design for A = 0 and k >= d+1 (Fourier / trigonometric construction).
 
@@ -146,14 +258,23 @@ def _design_from_eigendecomposition(
     hat_d = min(d, k)
 
     B = np.zeros((d, k), dtype=float)
-    for j in range(min(d, k)):
+    for j in range(hat_d):
         if beta_p[j] > 0.0:
             B[j, j] = math.sqrt(beta_p[j])
 
-    overline_beta = np.concatenate([beta_p[:hat_d], np.zeros(k - hat_d)])
-    R = _orthogonal_equalize_diagonal(overline_beta, tol=tol)
+    s_used = float(np.sum(beta_p[:hat_d]))
+    if s_used > 0.0:
+        # Bendel--Mickey expects the current squared column norms in ascending order
+        # and an ascending target. The target is constant, so any permutation suffices;
+        # we sort the columns of B by current squared norm.
+        a = np.einsum("dn,dn->n", B, B)
+        perm = np.argsort(a, kind="stable")
+        B_sorted = B[:, perm]
+        z_target = np.full(k, s_used / k)
+        X0 = _match_column_norms_bendel_mickey(B_sorted, z_target, tol=tol)
+    else:
+        X0 = B
 
-    X0 = B @ R
     col_norms = np.linalg.norm(X0, axis=0)
     if np.any(col_norms > 1.0 + tol):
         warnings.warn("Failed to construct unit-ball design columns within tolerance")
